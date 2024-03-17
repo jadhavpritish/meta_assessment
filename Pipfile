@@ -1,0 +1,28 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tabulate = "*"
+numpy = "*"
+pandas = "*"
+scipy = "*"
+scikit-learn = "*"
+
+
+[dev-packages]
+jupyterlab = "*"
+jupytext = "*"
+black = "*"
+isort = "*"
+jupyterlab_code_formatter = "*"
+pivottablejs = "*"
+plotly = "*"
+itables = "*"
+
+[pipenv]
+allow_prereleases = false
+
+[requires]
+python_version = "3.11"
