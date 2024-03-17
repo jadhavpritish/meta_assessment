@@ -9,7 +9,8 @@ numpy = "*"
 pandas = "*"
 scipy = "*"
 scikit-learn = "*"
-
+lightgbm = "*"
+matplotlib = "*"
 
 [dev-packages]
 jupyterlab = "*"
@@ -20,6 +21,7 @@ jupyterlab_code_formatter = "*"
 pivottablejs = "*"
 plotly = "*"
 itables = "*"
+ipython = "*"
 
 [pipenv]
 allow_prereleases = false
