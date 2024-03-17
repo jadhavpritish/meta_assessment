@@ -17,9 +17,10 @@
 #
 
 # +
+import warnings
 from datetime import datetime
+from typing import NamedTuple
 
-import lightgbm as lgb
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -29,8 +30,15 @@ from IPython.display import Markdown
 from itables import init_notebook_mode, show
 from pivottablejs import pivot_ui
 from scipy.stats import gmean
-from sklearn.model_selection import train_test_split
+from sklearn.compose import make_column_selector, make_column_transformer
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OrdinalEncoder
 from tabulate import tabulate
+
+warnings.simplefilter(action="ignore")
 
 pio.renderers.default = "iframe"
 
@@ -88,7 +96,7 @@ print(tabulate(data_schema, headers="keys", tablefmt="psql"))
 # +
 # helpers
 
-RAW_KPIS: list[str] = ["impressions", "leads", "mqls", "spent"]
+RAW_KPIS: list[str] = ["impressions", "leads", "mqls", "spent", "cvr"]
 
 AGGREGATION_COLS: dict[str, tuple[str, str]] = {
     "impressions": ("impressions", "sum"),
@@ -144,6 +152,8 @@ raw_campaign_df["day_of_month"] = raw_campaign_df["created_date"].dt.strftime("%
 #
 
 # ## Missing Values Analysis:
+#
+# Missing values can cause unexpected failures while training a predictive model. Efficiently handling them is imperative for training a robust model.
 
 # +
 columns_with_na_values = raw_campaign_df.columns[raw_campaign_df.isna().any()].values
@@ -174,7 +184,11 @@ valid_campaign_df = raw_campaign_df[~raw_campaign_df.isna().any(axis=1)]
 print(f"Length of data after dropping NA rows: {len(valid_campaign_df)}")
 # -
 
-# ## Data Aggregation:
+# ## Feature Engineering, Data Aggregation:
+#
+# * The daily MQL data is zero inflated. This poses a significant challenge in training a robuist predictive model.
+# * Therefore, in addition to the categorical features like channel , ad-type, experiment goal, etc, we shall also leverage date related features.
+# * Aggregate the data by potential input features before proceeding to data transformation and model training.
 
 # +
 agg_df = (
@@ -189,6 +203,7 @@ agg_df = (
         ]
     )
     .agg(**AGGREGATION_COLS)
+    .pipe(compute_derived_kpis)
     .reset_index()
 )
 
@@ -202,14 +217,24 @@ display(
         """
 * Filter out rows with impressions = 0 
 * Filter out rows with insignificant spend, say, < \$1. 
-    * The threshold **\$0.5** is pullled out of the hat (arbitrary)
+    * The threshold **\$1** is pullled out of the hat (arbitrary)
     * Ideally, we would want to leverage click through rate with confidence intervals to identify the number of impressions needed to drive __at least__ one clicks. 
     * Unfortunately, clicks are not reported on the report. 
 """
     )
 )
 
+print(f"Length of data before performance based cleaning: {len(agg_df)}")
+
 filtered_campaign_df = agg_df.loc[((agg_df.impressions > 0) & (agg_df.spent > 1))]
+
+print(f"Length of data after performance based cleaning: {len(filtered_campaign_df)}")
+print(
+    f"Dropped {len(agg_df) - len(filtered_campaign_df)} rows based on insignificant performance"
+)
+# -
+
+# ## Feature Distribution and Transformations
 
 # +
 fig = go.Figure()
@@ -255,14 +280,25 @@ fig.update_layout(
 #
 # * Applying Non-Linear transformations like log or square root to long tailed distribution compresses the range of extreme values in the long tail.
 # * Data Normalization: Long-tailed distributions often exhibit positive skewness, where the majority of observations cluster towards lower values while a few observations have extremely high values. Logarithmic transformation tends to normalize the skewed data by spreading out the lower values and compressing the higher values.
+#
+# ### Transformed features and dependent variable
 
 # +
-for metric in ["impressions", "spent"]:
-    filtered_campaign_df[f"log_{metric}"] = np.log1p(filtered_campaign_df[metric])
+for metric in ["impressions", "spent", "leads", "mqls", "cvr"]:
+    if metric == "cvr":
+        filtered_campaign_df[f"trans_{metric}"] = np.sqrt(filtered_campaign_df[metric])
+    else:
+        filtered_campaign_df[f"trans_{metric}"] = np.log1p(filtered_campaign_df[metric])
 
 fig = go.Figure()
 
-for metric in ["log_impressions", "log_spent"]:
+for metric in [
+    "trans_impressions",
+    "trans_spent",
+    "trans_mqls",
+    "trans_leads",
+    "trans_cvr",
+]:
     figx = go.Histogram(x=filtered_campaign_df[metric], visible=False)
     fig.add_trace(figx)
 
@@ -276,12 +312,25 @@ fig.update_layout(
                     "args": [
                         {
                             "visible": [
-                                k == metric for k in ["log_impressions", "log_spent"]
+                                k == metric
+                                for k in [
+                                    "trans_impressions",
+                                    "trans_spent",
+                                    "trans_mqls",
+                                    "trans_leads",
+                                    "trans_cvr",
+                                ]
                             ]
                         },
                     ],
                 }
-                for metric in ["log_impressions", "log_spent"]
+                for metric in [
+                    "trans_impressions",
+                    "trans_spent",
+                    "trans_mqls",
+                    "trans_leads",
+                    "trans_cvr",
+                ]
             ],
             "y": 1.2,
             "x": 0.4,
@@ -289,42 +338,173 @@ fig.update_layout(
     ],
     title=f"Post Transfromation Distribution",
 ).update_traces(visible=True, selector=0)
+# -
+
+# ## Training:
+#
+#
+# ### Model Choice:
+#
+#
+# ### Evaluation Metric:
+#
+# ### Loss Function:
+#
+#
+#
+#
+#
 
 # +
-CATEGORICAL_FEATURES = [
+FEATURES = [
     "wiz_campaign_channel",
     "ad_library_type",
     "offer_library_type",
     "experiment_goal",
     "day_of_month",
     "day_of_week",
+    "trans_impressions",
+    "trans_spent",
+    "trans_leads",
 ]
-filtered_campaign_df[CATEGORICAL_FEATURES] = filtered_campaign_df[
-    CATEGORICAL_FEATURES
-].astype("category")
+LABEL = "trans_cvr"
 
 
-X = filtered_campaign_df[
-    [
-        "wiz_campaign_channel",
-        "ad_library_type",
-        "offer_library_type",
-        "experiment_goal",
-        "day_of_month",
-        "day_of_week",
-        "log_impressions",
-        "log_spent",
-        "leads",
-    ]
-]
+class trainOut(NamedTuple):
+    cv_summary: pd.DataFrame
+    model_pipeline: Pipeline
+    hold_out_pred_df: pd.DataFrame
 
-y = filtered_campaign_df["mqls"]
 
-X_train, X_other, y_train, y_other = train_test_split(
-    X, y, test_size=0.3, random_state=42
-)
+def split_data(all_data: pd.DataFrame) -> tuple[pd.DataFrame, ...]:
 
-X_valid, X_test, y_valid, y_test = train_test_split(
-    X_other, y_other, test_size=0.4, random_state=56
-)
+    train_val_df, test_df = train_test_split(
+        all_data,
+        test_size=0.2,
+        random_state=32,
+    )
+    return train_val_df, test_df
+
+
+def train_model(train_val_df: pd.DataFrame, k_fold: int = 4) -> Pipeline:
+
+    categorical_encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-1
+    )
+    preprocessor = make_column_transformer(
+        (categorical_encoder, make_column_selector(dtype_include=object)),
+        remainder="passthrough",
+    )
+
+    regressor = RandomForestRegressor(random_state=51)
+
+    param_grid = {
+        "n_estimators": [5, 10, 12],
+        "max_depth": [3, 5, 7, 9],
+        "max_features": [0.2, 0.3, 0.5, 0.6],
+    }
+
+    grid_regressor = GridSearchCV(
+        regressor, param_grid, cv=k_fold, refit=True, scoring="r2"
+    )
+
+    tree = make_pipeline(preprocessor, grid_regressor).fit(
+        train_val_df[FEATURES], train_val_df[LABEL]
+    )
+
+    return tree
+
+
 # -
+
+
+def run(perf_data: pd.DataFrame) -> trainOut:
+
+    train_val_df, test_df = split_data(perf_data)
+
+    trained_pipeline = train_model(train_val_df=train_val_df)
+    grid_search_res = trained_pipeline.named_steps["gridsearchcv"]
+
+    cv_summary_df = pd.DataFrame(grid_search_res.cv_results_).sort_values(
+        "rank_test_score"
+    )
+
+    print(grid_search_res.best_estimator_)
+
+    print("Cross Validation Summary")
+    show(cv_summary_df)
+
+    train_pred = round(
+        np.power(trained_pipeline.predict(train_val_df), 2) * train_val_df["leads"]
+    )
+    test_pred = round(np.power(trained_pipeline.predict(test_df), 2) * test_df["leads"])
+
+    train_r2_score = r2_score(train_pred, train_val_df["mqls"])
+    test_r2_score = r2_score(test_pred, test_df["mqls"])
+
+    test_df["predicted_mqls"] = test_pred
+
+    print(f"{train_r2_score=}")
+    print(f"{test_r2_score=}")
+
+    return trainOut(
+        cv_summary=cv_summary_df,
+        model_pipeline=trained_pipeline,
+        hold_out_pred_df=test_df,
+    )
+
+
+# +
+# Train RandomForest Regressor using K fold cross validation
+
+res = run(perf_data=filtered_campaign_df)
+# -
+
+# ## Hold out data precictions Comparison
+
+# +
+out_cols = [
+    "wiz_campaign_channel",
+    "ad_library_type",
+    "experiment_goal",
+    "offer_library_type",
+    "day_of_week",
+    "day_of_month",
+    "impressions",
+    "leads",
+    "spent",
+    "mqls",
+    "predicted_mqls",
+]
+
+comparison_df = res.hold_out_pred_df[out_cols].reset_index(drop=True)
+comparison_df["diff"] = comparison_df["mqls"] - comparison_df["predicted_mqls"]
+display(comparison_df)
+# -
+
+# ## Closing Comments:
+#
+# * Transforming features with long tailed distribution minimizes the probability of model being sensitive to outliers.
+# * Predicting a bounded variable, conversion_rate, yields a more robust model than directly predicting volume of mqls.
+# * A tree based model facilitates training a non-linear model. A Rnadom Forest was used to train the model for predicing conversion rates and hence volume of mqls.
+#   * By randomly selecting the features as well as the datapoints used for training each tree, Random Forest are less likely to overfit as compared to Decision Trees.
+#
+# * The trained model achieved a R2 score **72%** on the training data and score of **66.5%** on the hold data.
+#     * Given that the difference between R2 scores for training data and test (hold-out) data is NOT significant, the chances of model overfitting the data is **low**. In other words, based on datapoints above, the model is generalizable.
+#
+#
+# ## Future Work:
+#
+# * A thorough analysis of training vs test R2 score is needed to ensure that the model is truly generalizable.
+# * Proposed Approach:
+#   * Set aside a subset of test data as out of the bag samples (OOB). DO NOT touch this samples.
+#   * Repeatedly train the model and measure the train and test (in the bag) R2 Scores.
+#   * Perform statistical test to ensure that the there is no statistically significant difference between the train and test R2 scores.
+#   * Ensure that the model's R2 score on the oob samples is in line with the training R2 score.
+#
+# * If the model is indeed overfitting, add more training data.
+#
+# * Leverage MLFlow for tracking experiments and enforcing version control on trained models.
+#
+# * Supervised learning models assumes stationarity. In real world, the data is seldom stationary. User behavior coupled with changing auction dynamic on advertising plaforms increases the probability of model diverging. Monitor model's performance in production and retrain as the model diverges.
+#
