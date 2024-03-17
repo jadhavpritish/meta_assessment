@@ -72,12 +72,14 @@ print(tabulate(data_schema, headers="keys", tablefmt="psql"))
 #
 #
 
+# +
 raw_campaign_df = pd.read_csv("./data/experiment_data.csv")
 raw_campaign_df["created_date"] = pd.to_datetime(
     raw_campaign_df["created_date"], format="%m/%d/%y"
 )
 raw_campaign_df["day_of_week"] = raw_campaign_df["created_date"].dt.day_name()
-pivot_ui(
+
+display(pivot_ui(
     raw_campaign_df,
     rows=[
         "wiz_campaign_channel",
@@ -96,9 +98,8 @@ pivot_ui(
         "wiz_campaign_channel",
     ],
     hiddenFromDragDrop=["impressions", "leads", "mqls", "daily_budget", "spent"],
-)
-
-raw_campaign_df.created_date.iloc[0].day_name()
+))
+# -
 
 # # Executive Summary 
 #

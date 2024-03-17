@@ -12,6 +12,8 @@ tmp
 
 # data files
 *.csv
+pivottablejs.html
+iframe_figures/
 
 
 # Byte-compiled / optimized / DLL files
