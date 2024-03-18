@@ -10,7 +10,7 @@
 #    * Model Design
 #    * Evaluation
 #    * Comments and Next Steps
-#  
+#
 # ## About the Data:
 #
 # The dataset contains campaign performance data (called experiment), including metrics such as impressions, clicks, cost, etc. The dataset also includes campaign metadata such as channel, creative type, offer, etc.
@@ -210,7 +210,7 @@ print(f"Length of data after dropping NA rows: {len(valid_campaign_df)}")
 
 # ## Feature Engineering, Data Aggregation:
 #
-# * The daily MQL data is zero inflated. This poses a significant challenge in training a robust predictive model. 
+# * The daily MQL data is zero inflated. This poses a significant challenge in training a robust predictive model.
 # * In addition to the categorical features like channel , ad-type, experiment goal, etc, we shall also leverage date related features.
 
 # +
@@ -282,7 +282,7 @@ fig.update_layout(
 #   * In case of long tailed distributions, outliers can disproportionately influence the model's coefficients, leading to biased parameter estimates.
 # * Violation of Normality Assumption:
 #   * Linear regression models often assumes that the residuals (the differences between the actual and predicted values) are normally distributed. Long-tailed distributions can result in residuals that violate this assumption, affecting the reliability of the model.
-#  
+#
 # ### Solution:
 #
 # * Applying Non-Linear transformations like log or square root to long tailed distribution compresses the range of extreme values in the long tail.
@@ -358,14 +358,14 @@ fig.update_layout(
 # - Linear Regression is susceptible to outliers directly impacting predictions.
 #
 # **Why NOT Neural Networks**?
-# - While Linear Regression is at one end of the spectrum, Neural Networks are probably at the other end. They are an ideal choice for modeling non-linear relationships resulting in non-linear decision boundaries. 
+# - While Linear Regression is at one end of the spectrum, Neural Networks are probably at the other end. They are an ideal choice for modeling non-linear relationships resulting in non-linear decision boundaries.
 # - Given the size of the training data (12k), using Neural Net is equivalent to **"killing a rat with a Bazooka"**. It is excessive and unwarranted.
 #
 # **Why Random Forest?**
 # - Random Forest is a middle out choice. Randomly selecting features and training datapoints for building weak learners reduces the probability of overfitting.
 # - Random Forest work well with categorical variables without enforcing one hot encoding.
 # - Visualizing feature importance is trivial.
-# - Random Forest are capable for fitting piecewise linear decision boundaries.  
+# - Random Forest are capable for fitting piecewise linear decision boundaries.
 #
 #
 
@@ -431,6 +431,7 @@ def train_model(train_val_df: pd.DataFrame, k_fold: int = 4) -> Pipeline:
 
 # -
 
+
 def run(perf_data: pd.DataFrame) -> trainOut:
 
     train_val_df, test_df = split_data(perf_data)
@@ -486,7 +487,7 @@ def run(perf_data: pd.DataFrame) -> trainOut:
 res = run(perf_data=filtered_campaign_df)
 # -
 
-# ## Hold out data precictions Comparison 
+# ## Hold out data precictions Comparison
 
 # +
 out_cols = [
@@ -514,13 +515,13 @@ display(comparison_df)
 # * Predicting a bounded variable, conversion_rate, yields a more robust model than directly predicting volume of mqls.
 # * A tree based model facilitates training a non-linear model. A Random Forest was used to train the model for predicing conversion rates and hence volume of mqls.
 #   * By randomly selecting the features as well as the datapoints used for training each tree, Random Forest are less likely to overfit as compared to Decision Trees.
-# * The trained model achieved a R2 score **85%** on the training data and score of **72.2%** on the hold data. This means, the model is able to explain 85% of the variance on the training data and 72.2% of the variance on the hold-out data. 
-#     * Given the difference between the R2 score on training and hold-out data and the fact that the datasets are zero inflated, there is a non-zero probability of model overfitting the data. 
+# * The trained model achieved a R2 score **85%** on the training data and score of **72.2%** on the hold data. This means, the model is able to explain 85% of the variance on the training data and 72.2% of the variance on the hold-out data.
+#     * Given the difference between the R2 score on training and hold-out data and the fact that the datasets are zero inflated, there is a non-zero probability of model overfitting the data.
 #
 #
 # ## Future Work:
-#  
-# * Predicting bottom of the funnel metrics like MQLs will always be plagued by the problem zero inflation. As we move down the funnel, there are unobserved variables that affect the conversion rates and hence the volume of MQLs. Consider predicting the volume of leads instead. That increases the probability of training a robust model. 
+#
+# * Predicting bottom of the funnel metrics like MQLs will always be plagued by the problem zero inflation. As we move down the funnel, there are unobserved variables that affect the conversion rates and hence the volume of MQLs. Consider predicting the volume of leads instead. That increases the probability of training a robust model.
 # * Leverage MLFlow for tracking experiments and enforcing version control on trained models.
 # * Supervised learning models assumes stationarity. In real world, the data is seldom stationary. User behavior coupled with changing auction dynamic on advertising plaforms increases the probability of model diverging. Monitor model's performance in production and retrain as the model diverges.
 #

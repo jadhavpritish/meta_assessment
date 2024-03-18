@@ -15,13 +15,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 from itables import init_notebook_mode, show
-from pivottablejs import pivot_ui
 from scipy.stats import gmean
 from tabulate import tabulate
 
 from utils import display_pivot_ui
 
 init_notebook_mode(all_interactive=True)
+# pio.renderers.default = "iframe"
 # -
 
 data_schema = pd.DataFrame(
@@ -102,7 +102,7 @@ display_pivot_ui(
 )
 # -
 
-# # Executive Summary 
+# # Executive Summary
 #
 # **Assumptions:**
 # * Efficiency is defined as the ability of a channel/ad_type/campaign to drive efficient MQLs.
@@ -110,13 +110,13 @@ display_pivot_ui(
 # * As a result, efficiency is determined by computing a weighted geometric mean of a leads and conversion_rate.
 #     * Geometric Mean allows us to compare attributes with varying properties and ranges, for instance, leads and conversion rate.
 #     * By design, with Geometric mean, changes in the smaller measures have just as dramatic an effect on the result as changing the big ones.
-#  
+#
 #
 #
 # | Questions? | Insights | Actionables |
 # |:--------------------|:----------|:------------|
 # | What is the most efficient Channel? | - LinkedIn is the most efficient channel accounting for **63%** of the leads and **76%** of the MQLs. <br>- LinkedIn has the lowest CMQL of **\$543** and the highest conversion rate of **36.9%** | - Double click into LinkedIn to identify growth opportunities. |
-# | What is the most inefficient Channel? | - Google is the least efficient channel with **\$12k** in spend and **zero** MQLs <br> - Instagram is the second most inefficient Channel with conversion rate of **15.6%** and a CMQL of **\$1203** <br>- Facebook has a weak impressions to lead ratio. Facebook accounts for **63.4%** of the total impressions while driving only **16%** of the MQLs| - Consider Pausing Google <br> - Investigate opportunities on Instagram to improve conversion rate and thereby the overall efficiency. <br> - Analyze Facebook targeting to impove upper funnel metrics| 
+# | What is the most inefficient Channel? | - Google is the least efficient channel with **\$12k** in spend and **zero** MQLs <br> - Instagram is the second most inefficient Channel with conversion rate of **15.6%** and a CMQL of **\$1203** <br>- Facebook has a weak impressions to lead ratio. Facebook accounts for **63.4%** of the total impressions while driving only **16%** of the MQLs| - Consider Pausing Google <br> - Investigate opportunities on Instagram to improve conversion rate and thereby the overall efficiency. <br> - Analyze Facebook targeting to impove upper funnel metrics|
 # |What are the most efficient ad types?| - Image and Convo are the most efficient Ad Types with **647** MQLs,accounting for **96%** of the total MQLs <br> CONVO ads have a conversion rate of 88%, the highest amongst all ad types, while driving **37%** of the total MQLs. <br> - CONVO ads have the highest CPM of **\$1026** thereby indicating limited ad inventory and high competition. <br> - IMAGE ads have the lowest CPM of **\$28.5**. | - Allocate more maketing budget to `CONVO` ads to drive incremental and efficient mqls. <br> - Leverage IMAGE Ads for driving brand awareness. |
 # |What are the most inefficient channels?| - VIDEO ads have a high conversion rate of **76%** but a high cost per lead of **$901**. <br> CAROUSEL ads have the worst cost per mql of **\$4922.95**.| - Identify opportunities to improve impression to lead ratio for VIDEO ads. <br> - Consider pausing CAROUSEL ads. |
 # |Facebook Upper Funnel Analytics|- Brand Awareness campaigns 55% of the total impressions attributed to campaigns on Facebook with ad type IMAGE. <br> - Excluding brandareness campaigns, FACEBOOK IMAGE ads optimized for CPL has the second best conversion rate of 33% and cost per MQL of **\$331**. <br> - Facebook VIDEO campaigns have the lowest CPM of **\$7.42** while FACEBOOK IMAGE campaigns have the second lowest CPM of **\$11.7**|- Double Down on Facebook Campaigns optimzied for MQLs <br> - Facebook campaigns are the cheapest way to drive brand awareness|
@@ -202,13 +202,13 @@ fig.show()
 
 # * `Facebook` ads have garnered 9.5M impressions accounting for 63.4% of the total impressions while driving only 16% of the MQLs.
 # * `Linkedin` has driven 1386 leads accounting for 63.8% of the total leads.
-# * 76% of the total MQLs are attributed to Linkedin. 
+# * 76% of the total MQLs are attributed to Linkedin.
 # * `Linkedin` is the most efficient channel with 37% conversion rate and a cost per MQL of \$543.09.
 # * `Google Ads` have the highest CPL of \$1022.53 with no MQLs
 #
 # **Potential Actionables for driving incremental leads/mqls:**
 # * Double click into `Linkedin` campaigns to identify growth opportunities.
-# * Double clicks into `Facebook` campaigns to reduce wasted spend. 
+# * Double clicks into `Facebook` campaigns to reduce wasted spend.
 
 #
 # ### By `ad_library_type`:
@@ -261,9 +261,9 @@ fig.show()
 #
 # **Potential Actionables for driving incremental leads/mqls:**
 # * Allocate more maketing budget to `CONVO` ads to drive efficient mqls.
-# * Double click into IMAGE ads to identify opportunities for fine tuning audience targeting. 
-# * Fine tune the audience targeting for `VIDEO` ads to lower the cost per lead. 
-# * Consider Pausing `CAROUSEL` ads. 
+# * Double click into IMAGE ads to identify opportunities for fine tuning audience targeting.
+# * Fine tune the audience targeting for `VIDEO` ads to lower the cost per lead.
+# * Consider Pausing `CAROUSEL` ads.
 
 
 # ### By `ad_library_type`, `wiz_campaign_channel` and `experiment_goal`:
@@ -331,11 +331,11 @@ show(pivot_df)
 #   * Excluding brandareness campaigns, `FACEBOOK IMAGE` ads optimized for CPL has the second best conversion rate of **30%** and cost per MQL of **\$331**.
 # * `CONVO` ads on `Linkedin` have the highest conversion rate of 88% resulting in a cost per MQL of **\$147**.
 # * `LinkedIn Image` ads optimized for CPL have a high conversion rate of 25% accompanied by a high cost per lead of **\$193**.
-# * `Instagram Video` ads optimized for CPL are probably an **anomaly** with a 100% conversion rate. 
+# * `Instagram Video` ads optimized for CPL are probably an **anomaly** with a 100% conversion rate.
 #
 # **Potential Actionables for driving incremental leads/mqls:**
 # * Double Down on Lead generation `Facebook Image` and `LinkedIn CONVO` cmapigns to drive quality leads that maximize the probability of driving MQLs.
-# * Boost the overall efficiency of `LinkedIn Image` ads optimized for lead generation by reducing wasted ad spends. 
+# * Boost the overall efficiency of `LinkedIn Image` ads optimized for lead generation by reducing wasted ad spends.
 
 
 # ### Analysis by Channel, Ad Type and Offer type
@@ -402,7 +402,7 @@ for offer_type, group_df in ch_ad_offer_df.groupby("offer_library_type"):
 show(ch_ad_offer_pivot_df)
 # -
 
-# ### Analysis by Day of Week 
+# ### Analysis by Day of Week
 #
 
 # +

@@ -4,12 +4,10 @@ from typing import Any, Optional
 
 import pandas as pd
 from humanfriendly import module as humanfriendly
-from IPython.display import HTML
+from IPython.display import HTML, Markdown
 
 
-def display_pivot_ui(
-    df: pd.DataFrame, *, show_pivot_table_help: Optional[bool] = None, **kwargs: Any
-) -> None:
+def display_pivot_ui(df: pd.DataFrame, **kwargs: Any) -> None:
     """
     Helper wrapper around pivottablejs which adds support for nbconvert.
 
