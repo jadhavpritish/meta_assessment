@@ -13,7 +13,7 @@
 #  
 # ## About the Data:
 #
-# Dataset contains campaign performance data (called experiment), including metrics such as impressions, clicks, cost, etc. The dataset also include campaign metadata such as channel, creative type, offer, etc.
+# The dataset contains campaign performance data (called experiment), including metrics such as impressions, clicks, cost, etc. The dataset also includes campaign metadata such as channel, creative type, offer, etc.
 #
 
 # +
@@ -41,7 +41,7 @@ from utils import display_pivot_ui
 
 warnings.simplefilter(action="ignore")
 
-pio.renderers.default = "iframe"
+# pio.renderers.default = "iframe"
 
 init_notebook_mode(all_interactive=True)
 # -
@@ -276,7 +276,7 @@ fig.update_layout(
 # * The distribution for impressions and spent is right skewed (long tailed)
 # * The distribution of leads and MQLs is zero inflated.
 #
-# ### Impact of long tailed distribution:
+# ### Impact of long-tailed distribution:
 #
 # * Model Sensitivity to Outliers:
 #   * In case of long tailed distributions, outliers can disproportionately influence the model's coefficients, leading to biased parameter estimates.

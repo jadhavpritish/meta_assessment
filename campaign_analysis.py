@@ -21,8 +21,6 @@ from tabulate import tabulate
 
 from utils import display_pivot_ui
 
-pio.renderers.default = "iframe"
-
 init_notebook_mode(all_interactive=True)
 # -
 
@@ -122,6 +120,7 @@ display_pivot_ui(
 # |What are the most efficient ad types?| - Image and Convo are the most efficient Ad Types with **647** MQLs,accounting for **96%** of the total MQLs <br> CONVO ads have a conversion rate of 88%, the highest amongst all ad types, while driving **37%** of the total MQLs. <br> - CONVO ads have the highest CPM of **\$1026** thereby indicating limited ad inventory and high competition. <br> - IMAGE ads have the lowest CPM of **\$28.5**. | - Allocate more maketing budget to `CONVO` ads to drive incremental and efficient mqls. <br> - Leverage IMAGE Ads for driving brand awareness. |
 # |What are the most inefficient channels?| - VIDEO ads have a high conversion rate of **76%** but a high cost per lead of **$901**. <br> CAROUSEL ads have the worst cost per mql of **\$4922.95**.| - Identify opportunities to improve impression to lead ratio for VIDEO ads. <br> - Consider pausing CAROUSEL ads. |
 # |Facebook Upper Funnel Analytics|- Brand Awareness campaigns 55% of the total impressions attributed to campaigns on Facebook with ad type IMAGE. <br> - Excluding brandareness campaigns, FACEBOOK IMAGE ads optimized for CPL has the second best conversion rate of 33% and cost per MQL of **\$331**. <br> - Facebook VIDEO campaigns have the lowest CPM of **\$7.42** while FACEBOOK IMAGE campaigns have the second lowest CPM of **\$11.7**|- Double Down on Facebook Campaigns optimzied for MQLs <br> - Facebook campaigns are the cheapest way to drive brand awareness|
+# |Facebook Landing Page Analysis| - Lead Generation Facebook IMAGE campaign with offer library type - Landing Page, has the worst cpmql of \$4685| - Consider pausing LG Facebook Image campaigns with offer library type - Landing Page. <br> - Alternatively, consider revamping the landing page to reduce the bounce-off rate. |
 # |What are the best days and worst days to advertise?|- Tuesday, Wednesday, Thursday and Friday drive more than **70%** of the MQLS at a conversion rate of **33.2%** <br> - Weekend has the lowest conversion rate of **23%**| - Reallocate budgets from weekends to weekdays|
 # |Concluding thoughts| - LinkedIn drives the lion's share of MQLS. <br> - Weekdays are the best time to advertise the product| - Based on the observed trends, the product being marketed is a **B2B product**. <br> - Generalize the day of week trends from Lead generation campaigns to Brand Awareness Campaigns. |
 
@@ -338,6 +337,70 @@ show(pivot_df)
 # * Double Down on Lead generation `Facebook Image` and `LinkedIn CONVO` cmapigns to drive quality leads that maximize the probability of driving MQLs.
 # * Boost the overall efficiency of `LinkedIn Image` ads optimized for lead generation by reducing wasted ad spends. 
 
+
+# ### Analysis by Channel, Ad Type and Offer type
+
+# +
+ch_ad_offer_df = (
+    raw_campaign_df.groupby(
+        [
+            "wiz_campaign_channel",
+            "ad_library_type",
+            "experiment_goal",
+            "offer_library_type",
+        ]
+    )
+    .agg(**AGGREGATION_COLS)
+    .pipe(compute_derived_kpis)
+    .sort_values("spent", ascending=False)
+    .reset_index()
+)
+ch_ad_offer_df["efficiency"] = gmean(
+    ch_ad_offer_df[["leads", "cvr", "inv_cpmql"]],
+    axis=1,
+    weights=[3, 5, 2],
+    nan_policy="propagate",
+)
+
+ch_ad_offer_pivot_df = pd.pivot(
+    ch_ad_offer_df[
+        [
+            "wiz_campaign_channel",
+            "ad_library_type",
+            "experiment_goal",
+            "offer_library_type",
+        ]
+        + DISPLAY_COLS
+    ],
+    index=["wiz_campaign_channel", "ad_library_type"],
+    columns=["experiment_goal", "offer_library_type"],
+    values=DISPLAY_COLS,
+).fillna(0)
+
+
+for offer_type, group_df in ch_ad_offer_df.groupby("offer_library_type"):
+
+    group_df[[f"percent_{col}" for col in PERCENTAGE_COLS]] = (
+        100 * group_df[PERCENTAGE_COLS] / group_df[PERCENTAGE_COLS].sum()
+    )
+    group_df["x_label"] = (
+        group_df["wiz_campaign_channel"] + "_" + group_df["ad_library_type"]
+    )
+    fig = px.bar(
+        group_df,
+        x="x_label",
+        y=[f"percent_{col}" for col in PERCENTAGE_COLS],
+        title=f"Campaign Performance by Channel + Ad Type for Offer Library Type: {offer_type}",
+    )
+    fig.update_layout(
+        yaxis_title="Percentage Contribution", xaxis_title="Channel + Adtype"
+    )
+
+    display(fig.show())
+
+
+show(ch_ad_offer_pivot_df)
+# -
 
 # ### Analysis by Day of Week 
 #
