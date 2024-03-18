@@ -61,6 +61,7 @@ pip-delete-this-directory.txt
 
 #Ipython Notebook
 .ipynb_checkpoints
+*.ipynb
 
 
 # Logs

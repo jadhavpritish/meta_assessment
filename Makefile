@@ -14,6 +14,14 @@ clean-files: # Very basic clean functionality, limited to just files
 	find ./ -name "test.log" -and -type f -and  -not -path ".//.git/*" -delete
 	find ./ -name "__pycache__" -and -type d -and -not -path ".//.git/*" -delete
 
+clean-predictive-reports:
+	@[ -f ./predictive_modeling.html ] && rm predictive_modeling.html || true
+	@[ -f ./predictive_modeling.ipynb ] && rm predictive_modeling.ipynb || true
+
+clean-campaign-analysis-reports:
+	@[ -f ./campaign_analysis.html ] && rm campaign_analysis.html || true
+	@[ -f ./campaign_analysis.ipynb ] && rm campaign_analysis.ipynb || true
+
 clean-lite:: clean-files ## Clean files plus clean virtualenv (without recreating it)
 	pipenv clean
 
@@ -36,3 +44,12 @@ format: ## Autoformat the code.
 
 run-jupyterlab:
 	LABS_LAUNCH_DIRECTORY=$(LABS_LAUNCH_DIRECTORY) pipenv run jupyter lab
+
+generate-campaign-analysis-report: clean-campaign-analysis-reports
+	pipenv run jupytext --to ipynb campaign_analysis.py
+	pipenv run jupyter nbconvert --to html --no-input --execute campaign_analysis.ipynb campaign_analysis.html
+
+generate-predictive-modeling-report:clean-predictive-reports
+	pipenv run jupytext --to ipynb predictive_modeling.py
+	pipenv run jupyter nbconvert --to html --no-input --execute predictive_modeling.ipynb predictive_modeling.html
+

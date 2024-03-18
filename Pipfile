@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+humanfriendly = "*"
 tabulate = "*"
 numpy = "*"
 pandas = "*"
@@ -11,6 +12,10 @@ scipy = "*"
 scikit-learn = "*"
 lightgbm = "*"
 matplotlib = "*"
+pivottablejs = "*"
+plotly = "*"
+itables = "*"
+ipython = "*"
 
 [dev-packages]
 jupyterlab = "*"
@@ -18,10 +23,7 @@ jupytext = "*"
 black = "*"
 isort = "*"
 jupyterlab_code_formatter = "*"
-pivottablejs = "*"
-plotly = "*"
-itables = "*"
-ipython = "*"
+
 
 [pipenv]
 allow_prereleases = false
